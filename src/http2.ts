@@ -93,6 +93,8 @@ export async function createHttp2Request<T>(
   return new Promise((resolve, reject) => {
     let stream: any = []
     let headers: IncomingHttpHeaders & IncomingHttpStatusHeader
+    
+    request.setEncoding('utf8')
     request.on('response', (response) => {
       headers = response
     })
