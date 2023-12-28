@@ -1,6 +1,6 @@
 {
-  "name": "league-connect",
-  "version": "6.0.0-rc12",
+  "name": "league-linker",
+  "version": "1.0.0",
   "description": "Module for consuming the League of Legends Client APIs",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
     "type": "git",
     "url": "git+https://github.com/matsjla/league-connect.git"
   },
-  "author": "me@supergrecko.com",
+  "author": "coldstoneboy@qq.com",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/matsjla/league-connect/issues"
@@ -25,7 +25,9 @@
   "dependencies": {
     "@types/node-fetch": "^2.6.2",
     "@types/ws": "^8.5.3",
+    "bufferutil": "^4.0.8",
     "node-fetch": "^2.6.7",
+    "utf-8-validate": "^6.0.3",
     "ws": "^8.8.1"
   },
   "devDependencies": {

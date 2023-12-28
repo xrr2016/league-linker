@@ -77,10 +77,12 @@ export async function createHttp2Request<T>(
   credentials: Credentials
 ): Promise<Http2Response> {
   assert(!session.closed, 'createHttp2Request called on closed session')
+  const url = new URL(`https://127.0.0.1:${credentials.port}${options.url}`)
+
   const request = session.request({
-    ':path': '/' + trim(options.url),
-    ':method': options.method,
     Accept: '*/*',
+    ':method': options.method,
+    ':path': url.pathname + url.search,
     'Content-Type': 'application/json',
     Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
   })
@@ -93,8 +95,7 @@ export async function createHttp2Request<T>(
   return new Promise((resolve, reject) => {
     let stream: any = []
     let headers: IncomingHttpHeaders & IncomingHttpStatusHeader
-    
-    request.setEncoding('utf8')
+
     request.on('response', (response) => {
       headers = response
     })
