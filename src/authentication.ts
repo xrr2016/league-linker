@@ -17,6 +17,10 @@ export interface Credentials {
    */
   password: string
   /**
+   * The install directory of the LeagueClient
+   */
+  directory: string
+  /**
    * The system process id for the LeagueClientUx process
    */
   pid: number
@@ -132,6 +136,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     const name = options?.name ?? DEFAULT_NAME
     const portRegex = /--app-port=([0-9]+)(?= *"| --)/
     const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
+    const directoryRegex = /--install-directory=(.+?)(?= *"| --)/
     const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
     const isWindows = process.platform === 'win32'
 
@@ -153,6 +158,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       const stdout = rawStdout.replace(/\n|\r/g, '')
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
+      const [, directory] = stdout.match(directoryRegex)!
       const [, pid] = stdout.match(pidRegex)!
       const unsafe = options?.unsafe === true
       const hasCert = options?.certificate !== undefined
@@ -170,6 +176,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       return {
         port: Number(port),
         pid: Number(pid),
+        directory,
         password,
         certificate
       }
