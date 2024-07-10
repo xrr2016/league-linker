@@ -134,6 +134,7 @@ export class ClientElevatedPermsError extends Error {
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
   async function tryAuthenticate() {
     const name = options?.name ?? DEFAULT_NAME
+    const regionRegex = /--region=(.+?)(?= *"| --)/
     const portRegex = /--app-port=([0-9]+)(?= *"| --)/
     const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
     const directoryRegex = /--install-directory=(.+?)(?= *"| --)/
@@ -157,6 +158,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       // Remove newlines from stdout
       const stdout = rawStdout.replace(/\n|\r/g, '')
       const [, port] = stdout.match(portRegex)!
+      const [, region] = stdout.match(regionRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, directory] = stdout.match(directoryRegex)!
       const [, pid] = stdout.match(pidRegex)!
@@ -176,6 +178,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       return {
         port: Number(port),
         pid: Number(pid),
+        region,
         directory,
         password,
         certificate
