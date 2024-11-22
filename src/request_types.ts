@@ -30,5 +30,9 @@ export interface HttpRequestOptions<T = JsonObjectLike> {
    * an object type as the library will parse this into JSON and send along
    * with the request
    */
-  body?: T
+  body?: T,
+  /**
+   * Optionally a list of headers to send with the request
+   */
+  timeout?: number
 }

@@ -74,7 +74,8 @@ export async function createHttp1Request<T>(
           'Content-Type': 'application/json',
           Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
         },
-        agent: new https.Agent(agentOptions)
+        agent: new https.Agent(agentOptions),
+        timeout: options.timeout ?? 20000,
       },
       (response) => {
         let buffer: any = []
