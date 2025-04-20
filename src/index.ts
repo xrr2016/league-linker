@@ -16,6 +16,6 @@ export {
   EventResponse,
   EventCallback
 } from './websocket.js'
-export { DEPRECATED_request, DEPRECATED_RequestOptions, DEPRECATED_Response } from './request_deprecated.js'
-export { DEPRECATED_connect } from './websocket_deprecated.js'
+// export { DEPRECATED_request, DEPRECATED_RequestOptions, DEPRECATED_Response } from './request_deprecated.js'
+// export { DEPRECATED_connect } from './websocket_deprecated.js'
 export type { HttpRequestOptions, HttpResponse, JsonObjectLike, HeaderPair } from './request_types.js'
