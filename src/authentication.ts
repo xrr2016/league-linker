@@ -1,6 +1,7 @@
-import cp from 'child_process'
 import util from 'util'
+import cp from 'child_process'
 import { RIOT_GAMES_CERT } from './cert.js'
+import { queryUxCommandLineNative } from './native/index'
 
 const exec = util.promisify<typeof cp.exec.__promisify__>(cp.exec)
 
@@ -29,9 +30,17 @@ export interface Credentials {
    * it is `undefined` then unsafe authentication will be used.
    */
   certificate?: string
+  region: string
+  rsoPlatformId: string
+  riotClientPort: number
+  riotClientAuth: string
 }
 
 export interface AuthenticationOptions {
+  /**
+   * 使用 native 方式获取 LCU 客户端数据
+   */
+  native?: boolean
   /**
    * League Client process name. Set to RiotClientUx if you would like to
    * authenticate with the Riot Client
@@ -133,35 +142,52 @@ export class ClientElevatedPermsError extends Error {
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
   async function tryAuthenticate() {
+    const isNative = options?.native ?? true
+    const isWindows = process.platform === 'win32'
     const name = options?.name ?? DEFAULT_NAME
+    const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
     const regionRegex = /--region=(.+?)(?= *"| --)/
     const portRegex = /--app-port=([0-9]+)(?= *"| --)/
     const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
     const directoryRegex = /--install-directory=(.+?)(?= *"| --)/
-    const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
-    const isWindows = process.platform === 'win32'
-
-    let command: string
-    if (!isWindows) {
-      command = `ps x -o args | grep '${name}'`
-    } else if (isWindows && options?.useDeprecatedWmic === true) {
-      command = `wmic process where caption='${name}.exe' get commandline`
-    } else {
-      command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object -ExpandProperty CommandLine`
-    }
-
-    const executionOptions = isWindows ? { shell: options?.windowsShell ?? ('powershell' as string) } : {}
+    const rsoPlatformIdRegex = /--rso_platform_id=([\w-_]+)/
+    const riotClientPortRegex = /--riotclient-app-port=([0-9]+)/
+    const riotClientAuthRegex = /--riotclient-auth-token=([\w-_]+)/
+    const executionOptions = { shell: options?.windowsShell ?? ('powershell' as string) }
 
     try {
-      const { stdout: rawStdout } = await exec(command, executionOptions)
-      // TODO: investigate regression with calling .replace on rawStdout
-      // Remove newlines from stdout
+      let command: string
+      let rawStdout: string
+
+      if (isWindows) {
+        if (isNative) {
+          rawStdout = queryUxCommandLineNative(name)
+        } else {
+          if (options?.useDeprecatedWmic) {
+            command = `wmic process where caption='${name}.exe' get commandline`
+          } else {
+            command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object -ExpandProperty CommandLine`
+          }
+
+          const { stdout } = await exec(command, executionOptions)
+          rawStdout = stdout
+        }
+      } else {
+        command = `ps x -o args | grep '${name}'`
+        const { stdout } = await exec(command, {})
+        rawStdout = stdout
+      }
+
       const stdout = rawStdout.replace(/\n|\r/g, '')
+      const [, pid] = stdout.match(pidRegex)!
       const [, port] = stdout.match(portRegex)!
       const [, region] = stdout.match(regionRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, directory] = stdout.match(directoryRegex)!
-      const [, pid] = stdout.match(pidRegex)!
+      const [, rsoPlatformId = ''] = stdout.match(rsoPlatformIdRegex) || []
+      const [, riotClientPort = ''] = stdout.match(riotClientPortRegex) || []
+      const [, riotClientAuth = ''] = stdout.match(riotClientAuthRegex) || []
+
       const unsafe = options?.unsafe === true
       const hasCert = options?.certificate !== undefined
 
@@ -176,8 +202,11 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
           RIOT_GAMES_CERT
 
       return {
+        riotClientPort: Number(riotClientPort),
         port: Number(port),
         pid: Number(pid),
+        riotClientAuth,
+        rsoPlatformId,
         region,
         directory,
         password,
