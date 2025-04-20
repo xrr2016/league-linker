@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2024",
     "module": "esnext",
     "strict": true,
     "declaration": true,
@@ -17,5 +17,10 @@
     "moduleResolution": "node",
     "stripInternal": true
   },
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "examples"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "examples"
+  ]
 }

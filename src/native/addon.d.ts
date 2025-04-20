@@ -1,4 +1,4 @@
-declare module 'native/la-input-win64.node' {
+declare module 'la-input-win64.node' {
   interface LeagueAkariInputAddon {
     /**
      * 模拟按键输入
@@ -59,7 +59,7 @@ declare module 'native/la-input-win64.node' {
   export default inputAddon
 }
 
-declare module 'native/la-tools-win64.node' {
+declare module 'la-tools-win64.node' {
   interface LeagueAkariToolsAddon {
     /**
      * 感谢 Bilibili @Butter_Cookies 提供的思路
