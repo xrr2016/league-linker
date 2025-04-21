@@ -161,10 +161,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
 
       if (isWindows) {
         if (useNative && options?.queryNative) {
-          console.log('use native')
           rawStdout = options.queryNative(name)
         } else {
-          console.log('use wmic')
           if (options?.useDeprecatedWmic) {
             command = `wmic process where caption='${name}.exe' get commandline`
           } else {
@@ -179,8 +177,6 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         const { stdout } = await exec(command, {})
         rawStdout = stdout
       }
-
-      console.log('rawStdout: ', rawStdout)
 
       const stdout = rawStdout.replace(/\n|\r/g, '')
       const [, pid] = stdout.match(pidRegex)!
