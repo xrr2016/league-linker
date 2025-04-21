@@ -1,7 +1,6 @@
 import util from 'util'
 import cp from 'child_process'
 import { RIOT_GAMES_CERT } from './cert.js'
-import { queryUxCommandLineNative } from './native/index'
 
 const exec = util.promisify<typeof cp.exec.__promisify__>(cp.exec)
 
@@ -41,6 +40,7 @@ export interface AuthenticationOptions {
    * 使用 native 方式获取 LCU 客户端数据
    */
   native?: boolean
+  queryNative?: (clientName: string) => string
   /**
    * League Client process name. Set to RiotClientUx if you would like to
    * authenticate with the Riot Client
@@ -142,7 +142,7 @@ export class ClientElevatedPermsError extends Error {
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
   async function tryAuthenticate() {
-    const isNative = options?.native ?? true
+    const useNative = options?.native ?? true
     const isWindows = process.platform === 'win32'
     const name = options?.name ?? DEFAULT_NAME
     const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
@@ -160,9 +160,11 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       let rawStdout: string
 
       if (isWindows) {
-        if (isNative) {
-          rawStdout = queryUxCommandLineNative(name)
+        if (useNative && options?.queryNative) {
+          console.log('use native')
+          rawStdout = options.queryNative(name)
         } else {
+          console.log('use wmic')
           if (options?.useDeprecatedWmic) {
             command = `wmic process where caption='${name}.exe' get commandline`
           } else {
@@ -177,6 +179,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         const { stdout } = await exec(command, {})
         rawStdout = stdout
       }
+
+      console.log('rawStdout: ', rawStdout)
 
       const stdout = rawStdout.replace(/\n|\r/g, '')
       const [, pid] = stdout.match(pidRegex)!
@@ -196,10 +200,10 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       const certificate = hasCert
         ? options!.certificate
         : // Otherwise: does the user want unsafe requests?
-        unsafe
-        ? undefined
-        : // Didn't specify, use our own certificate
-          RIOT_GAMES_CERT
+          unsafe
+          ? undefined
+          : // Didn't specify, use our own certificate
+            RIOT_GAMES_CERT
 
       return {
         riotClientPort: Number(riotClientPort),
